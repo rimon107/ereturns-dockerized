@@ -1,24 +1,32 @@
 ereturns
 ========
 
-Behold My Awesome Project!
+This portal is used for uploading and downloading data.
 
-.. image:: https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter
-     :target: https://github.com/pydanny/cookiecutter-django/
-     :alt: Built with Cookiecutter Django
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-     :target: https://github.com/ambv/black
-     :alt: Black code style
-
-Settings
---------
-
-Moved to settings_.
-
-.. _settings: http://cookiecutter-django.readthedocs.io/en/latest/settings.html
 
 Basic Commands
 --------------
+
+Deployment
+----------
+
+The following details how to deploy this application.
+
+Docker
+^^^^^^
+
+For local development:
+
+::
+
+  $ docker-compose -f local.yml up --build
+
+For production:
+
+::
+
+  $ docker-compose -f production.yml up --build
+
 
 Setting Up Your Users
 ^^^^^^^^^^^^^^^^^^^^^
@@ -56,12 +64,6 @@ Running tests with py.test
 
   $ pytest
 
-Live reloading and Sass CSS compilation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Moved to `Live reloading and SASS compilation`_.
-
-.. _`Live reloading and SASS compilation`: http://cookiecutter-django.readthedocs.io/en/latest/live-reloading-and-sass-compilation.html
 
 Celery
 ^^^^^^
@@ -77,24 +79,3 @@ To run a celery worker:
 
 Please note: For Celery's import magic to work, it is important *where* the celery commands are run. If you are in the same folder with *manage.py*, you should be right.
 
-Deployment
-----------
-
-The following details how to deploy this application.
-
-Docker
-^^^^^^
-
-See detailed `cookiecutter-django Docker documentation`_.
-
-.. _`cookiecutter-django Docker documentation`: http://cookiecutter-django.readthedocs.io/en/latest/deployment-with-docker.html
-Custom Bootstrap Compilation
-^^^^^^
-
-The generated CSS is set up with automatic Bootstrap recompilation with variables of your choice.
-Bootstrap v4 is installed using npm and customised by tweaking your variables in ``static/sass/custom_bootstrap_vars``.
-
-You can find a list of available variables `in the bootstrap source`_, or get explanations on them in the `Bootstrap docs`_.
-
-.. _in the bootstrap source: https://github.com/twbs/bootstrap/blob/v4-dev/scss/_variables.scss
-.. _Bootstrap docs: https://getbootstrap.com/docs/4.1/getting-started/theming/
