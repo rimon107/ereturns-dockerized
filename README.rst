@@ -7,6 +7,30 @@ This portal is used for uploading and downloading data.
 Basic Commands
 --------------
 
+Install Packages
+^^^^^^^^^^^^^^^^
+
+Installing package using the following command:
+
+::
+
+  $ docker-compose -f file.yml run --rm django pip install package_name
+
+Running Commands Using Docker
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+command:
+
+::
+
+  $ docker-compose -f file.yml run --rm django python manage.py command
+  $ docker-compose -f local.yml run --rm django python manage.py makemigrations
+  $ docker-compose -f local.yml run --rm django python manage.py migrate
+  $ docker-compose -f local.yml exec postgres /bin/bash
+  $ docker-compose -f local.yml exec postgres backups
+  $ docker cp $(docker-compose -f local.yml ps -q postgres):/backups ./backups
+  $ docker-compose -f local.yml exec postgres restore backup_2018_03_13T09_05_07.sql.gz
+
 Deployment
 ----------
 

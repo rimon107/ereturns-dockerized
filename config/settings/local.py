@@ -11,7 +11,8 @@ SECRET_KEY = env(
     default="orClayuhAOwZg4nULNMYScgNQzPkhyF2pmG48ueUFsp20YCePUmSYzoZz8CFlqDh",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]
+# ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]
+ALLOWED_HOSTS = ["*"]
 
 # CACHES
 # ------------------------------------------------------------------------------
@@ -66,3 +67,15 @@ INSTALLED_APPS += ["django_extensions"]  # noqa F405
 CELERY_TASK_EAGER_PROPAGATES = True
 # Your stuff...
 # ------------------------------------------------------------------------------
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_HEADERS = ("x-requested-with", "content-type", "accept", "origin", "authorization", "x-csrftoken")
+
+SIMPLE_JWT = {
+    # 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    # 'REFRESH_TOKEN_LIFETIME': timedelta(days=3),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=3),
+    'SIGNING_KEY': env('SIMPLE_JWT_SIGNING_KEY', default=None) or SECRET_KEY,
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True
+}

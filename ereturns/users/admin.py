@@ -17,6 +17,31 @@ class UserAdmin(auth_admin.UserAdmin):
         (None, {"fields": ("username", "password")}),
         (_("Personal info"), {"fields": ("name", "email")}),
         (
+            _("Other info"),
+            {
+                "fields": (
+                    "report_type",
+                    "financial_institute_type",
+                    "financial_institute",
+                    "branch",
+                    "department",
+                    "status",
+                    "designation",
+                    "mobile",
+                    "phone",
+                    "approved_by",
+                    "approved_time",
+                    "password_reset_time",
+                    "last_password_update_time",
+                    "first_approved_by",
+                    "second_approved_by",
+                    "change_approved_by",
+                    "password_updated_by",
+                    "random_string"
+                )
+            }
+        ),
+        (
             _("Permissions"),
             {
                 "fields": (

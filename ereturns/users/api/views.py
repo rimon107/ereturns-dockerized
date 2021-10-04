@@ -13,7 +13,7 @@ User = get_user_model()
 class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    lookup_field = "username"
+    lookup_field = "id"
 
     def get_queryset(self, *args, **kwargs):
         return self.queryset.filter(id=self.request.user.id)
@@ -22,3 +22,15 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
     def me(self, request):
         serializer = UserSerializer(request.user, context={"request": request})
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+    @action(detail=False, methods=["GET"])
+    def members(self, request):
+        active = User.objects.filter(is_active=True).count()
+        inactive = User.objects.filter(is_active=False).count()
+        online = User.objects.filter(status=1).count()
+        data = {
+            "active": active,
+            "inactive": inactive,
+            "online": online,
+        }
+        return Response(status=status.HTTP_200_OK, data=data)

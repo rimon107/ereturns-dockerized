@@ -1,6 +1,7 @@
 """
 Base settings to build other settings files upon.
 """
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -72,11 +73,15 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
+    "drf_yasg",
+    # "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist"
 ]
 
 LOCAL_APPS = [
     "ereturns.users.apps.UsersConfig",
-    # Your stuff: custom apps go here
+    "ereturns.institutes.apps.InstitutesConfig",
+    "ereturns.rit.apps.RitConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -297,6 +302,7 @@ SOCIALACCOUNT_ADAPTER = "ereturns.users.adapters.SocialAccountAdapter"
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
