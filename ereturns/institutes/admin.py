@@ -16,7 +16,7 @@ admin.site.register(ReportType)
 
 @admin.register(Branch)
 class BranchAdmin(admin.ModelAdmin):
-    list_display = ["name", "financial_institute"]
+    list_display = ["code", "name", "financial_institute"]
 
 
 @admin.register(Department)

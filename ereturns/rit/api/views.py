@@ -2,10 +2,11 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin, CreateModelMixin
+from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.settings import api_settings
 
 from ereturns.institutes.api.serializers import DepartmentSerializer
 from ereturns.institutes.models import Department, Branch
@@ -65,10 +66,18 @@ class RitSupervisionViewSet(GenericViewSet):
     def upload(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # self.perform_create(serializer)
+        self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def get_success_headers(self, data):
+        try:
+            return {'Location': str(data[api_settings.URL_FIELD_NAME])}
+        except (TypeError, KeyError):
+            return {}
 
 class RitDownloadViewSet(GenericViewSet):
     serializer_class = RitManagementSerializer

@@ -25,13 +25,8 @@ class User(AbstractUser):
             'unique': _("A user with that username already exists."),
         },
     )
+    user_code = models.CharField(_('user code'), max_length=255, blank=True)
     password = models.CharField(_('password'), max_length=128)
-    report_type = models.ForeignKey(
-        ReportType,
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True
-    )
     financial_institute_type = models.ForeignKey(
         FinancialInstituteType,
         on_delete=models.CASCADE,
@@ -50,12 +45,7 @@ class User(AbstractUser):
         blank=True,
         null=True
     )
-    department = models.ForeignKey(
-        Department,
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True
-    )
+    department = models.CharField(_("department"), blank=True, null=True, max_length=255)
     status = models.IntegerField(choices=Status.Status, default=Status.OFFLINE)
     email = models.EmailField(_('email address'), blank=True)
     approved_time = models.DateTimeField(_('approved time'), blank=True, null=True)
@@ -104,7 +94,7 @@ class User(AbstractUser):
     random_string = models.CharField(_("random string"), blank=True, max_length=255)
     is_active = models.BooleanField(
         _('active'),
-        default=True,
+        default=False,
         help_text=_(
             'Designates whether this user should be treated as active. '
             'Unselect this instead of deleting accounts.'
