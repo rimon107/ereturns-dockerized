@@ -20,6 +20,7 @@ class UserAdmin(auth_admin.UserAdmin):
             _("Other info"),
             {
                 "fields": (
+                    "user_code",
                     "report_type",
                     "financial_institute_type",
                     "financial_institute",

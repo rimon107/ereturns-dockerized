@@ -10,20 +10,18 @@ class BaseUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "name"]
+        fields = ["id", "user_code", "username", "name"]
 
 
 class UserSerializer(serializers.ModelSerializer):
-    report_type = serializers.SerializerMethodField()
     financial_institute_type = serializers.SerializerMethodField()
     financial_institute = serializers.SerializerMethodField()
     branch = serializers.SerializerMethodField()
-    department = serializers.SerializerMethodField()
     status = ChoiceField(choices=Status.Status)
 
     class Meta:
         model = User
-        fields = ["id", "username", "name", "report_type", "financial_institute_type",
+        fields = ["id", "user_code", "username", "name", "financial_institute_type",
                   "financial_institute", "branch", "status", "email", "designation", "department",
                   "mobile", "phone", "last_login", "is_active", "is_active",
                   "change_approved_by", "approved_time", "approved_by", "password_reset_time",
@@ -34,9 +32,10 @@ class UserSerializer(serializers.ModelSerializer):
             "url": {"view_name": "api:user-detail", "lookup_field": "id"}
         }
 
-    def get_report_type(self, obj):
-        if obj.report_type:
-            return f"{obj.report_type.name}"
+    # def create(self, validated_data):
+    #     print("validated_data")
+    #     print(validated_data)
+
 
     def get_financial_institute_type(self, obj):
         fi_type = {
@@ -60,11 +59,3 @@ class UserSerializer(serializers.ModelSerializer):
             "name": obj.branch.name,
         }
         return branch
-
-    def get_department(self, obj):
-        # return f"{obj.department.name}"
-        department = {
-            "id": obj.department.id,
-            "name": obj.department.name,
-        }
-        return department
