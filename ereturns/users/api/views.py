@@ -26,13 +26,13 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
         return self.queryset.filter(id=self.request.user.id)
 
     def list(self, request, *args, **kwargs):
-        group_id = self.request.user.groups.all()[0].id
-        if group_id==1:
+        group = self.request.user.groups.all()[0]
+        if group.name=="BB Admin":
             list_queryset = self.queryset
         else:
             fi_id = self.request.user.financial_institute.id
             list_queryset = self.queryset.filter(
-                groups__id=group_id, financial_institute__id=fi_id)
+                groups__id=group.id, financial_institute__id=fi_id)
         queryset = self.filter_queryset(list_queryset)
 
         page = self.paginate_queryset(queryset)
@@ -50,15 +50,87 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
 
     @action(detail=False, methods=["GET"])
     def members(self, request):
-        active = User.objects.filter(is_active=True).count()
-        inactive = User.objects.filter(is_active=False).count()
-        online = User.objects.filter(status=1).count()
-        data = {
-            "active": active,
-            "inactive": inactive,
-            "online": online,
-        }
+        user = self.request.user
+        group = user.groups.all()[0]
+        if group.name=="BB Admin":
+            active = User.objects.filter(is_active=True).count()
+            inactive = User.objects.filter(is_active=False).count()
+            online = User.objects.filter(status=1).count()
+            data = {
+                "active": active,
+                "inactive": inactive,
+                "online": online,
+            }
+        elif group.name=="Bank HO Admin":
+            active = User.objects.filter(
+                financial_institute_id=user.financial_institute_id, is_active=True).count()
+            pending = User.objects.filter(
+                financial_institute_id=user.financial_institute_id, is_active=False).count()
+            online = User.objects.filter(
+                financial_institute_id=user.financial_institute_id, status=1).count()
+
+            data = {
+                "active": active,
+                "pending": pending,
+                "online": online,
+            }
+        else:
+            data = {
+
+            }
         return Response(status=status.HTTP_200_OK, data=data)
+
+    @action(detail=False, methods=["GET"], url_path="pending-list")
+    def pending_list(self, request):
+        user = self.request.user
+        group = user.groups.all()[0]
+        if group.name=="Bank HO Admin":
+            pending = User.objects.filter(financial_institute_id=user.financial_institute_id, is_active=False)
+            data = {
+                "pending": pending
+            }
+            return Response(status=status.HTTP_200_OK, data=data)
+        else:
+            data = {
+                "pending": ["Head Office Admin users can access pending the list."]
+            }
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+
+    def update(self, request, *args, **kwargs):
+        updated_user_id = request.data.get("id", None)
+        if not updated_user_id:
+            data = {
+                "user_id": ["To update an user, user id must be provided."]
+            }
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        group = instance.groups.all()[0]
+        if group.name=="BB Admin":
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        else:
+            try:
+                updated_user = User.objects.get(id=updated_user_id)
+            except User.DoesNotExist:
+                data = {
+                    "not_found": ["user is not found"]
+                }
+                return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+            if instance.financial_institute_id != updated_user.financial_institute_id:
+                data = {
+                    "permission_denied": ["user cannot be updated."]
+                }
+                return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
 class UserPasswordChangeViewSet(GenericViewSet):
     serializer_class = UserPasswordUpdateSerializer
