@@ -25,7 +25,7 @@ class FinancialInstituteViewSet(ListModelMixin, GenericViewSet):
     @action(detail=False, methods=["GET"])
     def branch(self, request):
         fi_id = self.request.GET.get('fi_id')
-        queryset = Branch.objects.filter(financial_institute_id=fi_id)
+        queryset = Branch.objects.filter(financial_institute_id=fi_id).exclude(name__iexact="Head Office")
         serializer = BranchSerializer(queryset, many=True)
         return Response(serializer.data)
 

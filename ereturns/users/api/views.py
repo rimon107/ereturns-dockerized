@@ -2,14 +2,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.settings import api_settings
 
-from .serializers import UserSerializer
-from ..constants import Status
+from .serializers import UserSerializer, UserPasswordUpdateSerializer
+from django.utils.translation import gettext_lazy as _
 from ...institutes.models import FinancialInstitute, Branch, FinancialInstituteType
 
 User = get_user_model()
@@ -17,6 +18,7 @@ User = get_user_model()
 
 class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
     serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
     queryset = User.objects.all()
     lookup_field = "id"
 
@@ -58,6 +60,34 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
         }
         return Response(status=status.HTTP_200_OK, data=data)
 
+class UserPasswordChangeViewSet(GenericViewSet):
+    serializer_class = UserPasswordUpdateSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset = User.objects.all()
+
+    @action(detail=False, methods=["PATCH"], url_path="change-password")
+    def change_password(self, request, *args, **kwargs):
+        user = self.request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+        if not user.check_password(current_password):
+            raise ValidationError(
+                ({'wrong_password': _('Your existing password was entered incorrectly. Please try again.')})
+            )
+        if new_password != confirm_password:
+            raise ValidationError({'password_mismatch': _("The new and confirm password didn't match.")})
+
+        if current_password == new_password:
+            raise ValidationError({'password_same': _("The current and new password must be different.")})
+
+        user.set_password(new_password)
+        user.save()
+        data = {
+            "success": "Password successfully changed.",
+        }
+        return Response(status=status.HTTP_200_OK, data=data)
+
 
 class UserRegistrationViewSet(GenericViewSet):
     permission_classes = (AllowAny, )
@@ -67,7 +97,6 @@ class UserRegistrationViewSet(GenericViewSet):
 
     @action(detail=False, methods=["POST"], url_path="add")
     def add(self, request, *args, **kwargs):
-        print(request.data)
         report_type = request.data.get("report_type")
         group_name = None
         if report_type:
@@ -82,19 +111,31 @@ class UserRegistrationViewSet(GenericViewSet):
                 return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
         group = Group.objects.filter(name=group_name)[0]
         fi_id = int(request.data.get("financial_institute_id"))
-        branch_id = int(request.data.get("branch_id"))
         branch = None
-        try:
-            branch = Branch.objects.get(id=branch_id)
-        except Branch.DoesNotExist:
-            data = {
-                "branch": ["branch is not valid"]
-            }
-            return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+        branch_id = None
+        if group_name == "Bank Branch end user":
+            branch_id = int(request.data.get("branch_id"))
+            try:
+                branch = Branch.objects.get(id=branch_id)
+            except Branch.DoesNotExist:
+                data = {
+                    "branch": ["branch is not valid"]
+                }
+                return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+        elif group_name == "Bank HO end user":
+            branch = Branch.objects.filter(financial_institute_id=fi_id, name__iexact="Head Office")
+            if branch.exists():
+                branch = branch.first()
+            else:
+                data = {
+                    "branch": ["branch is not valid"]
+                }
+                return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
         last_user_code = None
         if group_name=="Bank HO end user":
-            last_user = User.objects.filter(financial_institute_id=fi_id, group__id=group.id)
+            last_user = User.objects.filter(financial_institute_id=fi_id, groups__id=group.id)
             if last_user.exists():
+                print(last_user)
                 last_user_code = last_user.last().user_code
             else:
                 last_user_code = branch.code + "-" + "00"
@@ -109,7 +150,6 @@ class UserRegistrationViewSet(GenericViewSet):
         username = branch.code + "-" + code
         financial_institute_type_id = request.data.get("financial_institute_type_id", None),
         financial_institute_id = int(request.data.get("financial_institute_id")),
-        print(financial_institute_id[0])
         fi_type = None
         try:
             fi_type = FinancialInstituteType.objects.get(id=financial_institute_type_id[0])
@@ -140,16 +180,13 @@ class UserRegistrationViewSet(GenericViewSet):
             'mobile': request.data.get("mobile"),
             'phone': request.data.get("phone"),
             "status": "Offline",
-            "is_active": False
+            "is_active": False,
+            "groups": [group.id]
         }
-        print(data)
         serializer = self.get_serializer(data=data)
-        # print(serializer.data)
         serializer.is_valid(raise_exception=True)
-        # print(serializer.data)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
