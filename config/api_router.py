@@ -6,7 +6,7 @@ from ereturns.rit.api.views import (
     RitDownloadViewSet, RitFeaturesViewSet, RitSupervisionViewSet,
     RitFrequencyViewSet,  RitReportViewSet, RitUploadStatusViewSet
 )
-from ereturns.users.api.views import UserViewSet, UserRegistrationViewSet
+from ereturns.users.api.views import UserViewSet, UserRegistrationViewSet, UserPasswordChangeViewSet
 
 if settings.DEBUG:
     router = DefaultRouter()
@@ -14,6 +14,7 @@ else:
     router = SimpleRouter()
 
 router.register("users", UserViewSet)
+router.register("users/me", UserPasswordChangeViewSet)
 router.register("registration", UserRegistrationViewSet)
 
 
