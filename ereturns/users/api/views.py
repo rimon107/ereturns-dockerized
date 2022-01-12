@@ -64,14 +64,14 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
         elif group.name=="Bank HO Admin":
             active = User.objects.filter(
                 financial_institute_id=user.financial_institute_id, is_active=True).count()
-            pending = User.objects.filter(
+            inactive = User.objects.filter(
                 financial_institute_id=user.financial_institute_id, is_active=False).count()
             online = User.objects.filter(
                 financial_institute_id=user.financial_institute_id, status=1).count()
 
             data = {
                 "active": active,
-                "pending": pending,
+                "inactive": inactive,
                 "online": online,
             }
         else:
