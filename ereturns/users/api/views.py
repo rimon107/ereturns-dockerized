@@ -29,16 +29,19 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
         group = self.request.user.groups.all()[0]
         if group.name=="BB Admin":
             list_queryset = self.queryset
+        elif group.name=="Bank HO Admin":
+            list_queryset = self.queryset.filter(
+                financial_institute_id=self.request.user.financial_institute_id)
         else:
             fi_id = self.request.user.financial_institute.id
             list_queryset = self.queryset.filter(
                 groups__id=group.id, financial_institute__id=fi_id)
         queryset = self.filter_queryset(list_queryset)
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        # page = self.paginate_queryset(queryset)
+        # if page is not None:
+        #     serializer = self.get_serializer(page, many=True)
+        #     return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
