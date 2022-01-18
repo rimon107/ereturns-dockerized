@@ -78,8 +78,17 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
                 "online": online,
             }
         else:
-            data = {
+            active = User.objects.filter(
+                financial_institute_id=user.financial_institute_id, is_active=True).count()
+            inactive = User.objects.filter(
+                financial_institute_id=user.financial_institute_id, is_active=False).count()
+            online = User.objects.filter(
+                financial_institute_id=user.financial_institute_id, status=1).count()
 
+            data = {
+                "active": active,
+                "inactive": inactive,
+                "online": online,
             }
         return Response(status=status.HTTP_200_OK, data=data)
 
@@ -100,26 +109,20 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
             return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
 
     def update(self, request, *args, **kwargs):
-        updated_user_id = request.data.get("id", None)
-        if not updated_user_id:
+        partial = kwargs.pop('partial', False)
+        user_id = kwargs.get('id', None)
+        try:
+            instance = User.objects.get(id=user_id)
+        except User.DoesNotExist:
             data = {
-                "user_id": ["To update an user, user id must be provided."]
+                "not_found": ["User not found"]
             }
             return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
         group = instance.groups.all()[0]
         if group.name=="BB Admin":
             serializer = self.get_serializer(instance, data=request.data, partial=partial)
         else:
-            try:
-                updated_user = User.objects.get(id=updated_user_id)
-            except User.DoesNotExist:
-                data = {
-                    "not_found": ["user is not found"]
-                }
-                return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
-            if instance.financial_institute_id != updated_user.financial_institute_id:
+            if self.request.user.financial_institute_id != instance.financial_institute_id:
                 data = {
                     "permission_denied": ["user cannot be updated."]
                 }
@@ -278,13 +281,13 @@ class UserRegistrationViewSet(GenericViewSet):
         fi_id = self.request.GET.get('fi_id')
         branch_id = self.request.GET.get('branch_id')
         if not branch_id:
-            count = self.queryset.filter(groups__id=3, financial_institute__id=fi_id).count()
+            count = self.queryset.filter(groups__name="Bank HO end user", financial_institute__id=fi_id).count()
             data = {
-                "msg": "HO Branch User Limit Exceeded!" if count>4 else "HO Branch User can be created",
-                "status": False if count>4 else True
+                "msg": "HO Branch User Limit Exceeded!" if count>5 else "HO Branch User can be created",
+                "status": False if count>5 else True
             }
         else:
-            count = self.queryset.filter(groups__id=4,
+            count = self.queryset.filter(groups__name="Bank Branch end user",
                                             financial_institute__id=fi_id,
                                             branch__id=branch_id).count()
             data = {
