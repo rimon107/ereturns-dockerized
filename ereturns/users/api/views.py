@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -16,7 +16,7 @@ from ...institutes.models import FinancialInstitute, Branch, FinancialInstituteT
 User = get_user_model()
 
 
-class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
     queryset = User.objects.all()
@@ -32,6 +32,9 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
         elif group.name=="Bank HO Admin":
             list_queryset = self.queryset.filter(
                 financial_institute_id=self.request.user.financial_institute_id)
+            is_active = self.request.GET.get("is_active", None)
+            if is_active:
+                list_queryset = self.queryset.filter(is_active=is_active)
         else:
             fi_id = self.request.user.financial_institute.id
             list_queryset = self.queryset.filter(
@@ -137,6 +140,21 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        user_id = kwargs.get('id', None)
+        try:
+            instance = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            data = {
+                "not_found": ["User not found"]
+            }
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def perform_destroy(self, instance):
+        instance.delete()
 
 class UserPasswordChangeViewSet(GenericViewSet):
     serializer_class = UserPasswordUpdateSerializer
